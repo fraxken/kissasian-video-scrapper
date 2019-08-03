@@ -1,0 +1,40 @@
+{
+  "name": "kissasian",
+  "version": "1.0.0",
+  "description": "kissasian.ch (Drama site) - video embed scrapper",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fraxken/kissasian-video-scrapper.git"
+  },
+  "keywords": [
+    "kissasian",
+    "drama",
+    "scrapper"
+  ],
+  "files": [
+    "bin/index.js"
+  ],
+  "author": "GENTILHOMME Thomas <gentilhomme.thomas@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fraxken/kissasian-video-scrapper/issues"
+  },
+  "homepage": "https://github.com/fraxken/kissasian-video-scrapper#readme",
+  "bin": {
+    "kissasian": "./bin/index.js"
+  },
+  "devDependencies": {
+    "@slimio/eslint-config": "^3.0.2",
+    "@types/node": "^12.6.9"
+  },
+  "dependencies": {
+    "@slimio/async-cli-spinner": "^0.3.1",
+    "@slimio/lock": "^0.1.0",
+    "make-promises-safe": "^5.0.0",
+    "puppeteer": "^1.19.0"
+  }
+}
