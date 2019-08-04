@@ -7,6 +7,7 @@ require("make-promises-safe");
 const puppeteer = require("puppeteer");
 const Spinner = require("@slimio/async-cli-spinner");
 const sade = require("sade");
+const open = require("open");
 const { white, cyan, green, yellow, red } = require("kleur");
 
 // CONSTANTS
@@ -18,13 +19,14 @@ sade("kissasian <name>", true)
     .describe("Search a given kissasian drama")
     .example("kissasian Father-is-Strange")
     .option("-e, --episode <episode>", "select a given episode", null)
+    .option("-o, --open", "open embed link in your default navigator")
     .action(async(dramaName, opts) => {
         if (typeof opts.episode === "boolean") {
             opts.episode = "";
         }
 
         const episodes = opts.episode === null ? null : new Set(opts.episode.toString().split(","));
-        await main(dramaName, episodes);
+        await main(dramaName, episodes, opts.open);
     })
     .parse(process.argv);
 
@@ -72,7 +74,7 @@ async function scrapVideoPlayer(browser, dramaLink) {
         }
         spin.succeed(yellow().bold(embedLink));
 
-        return void 0;
+        return embedLink;
     }
     catch (error) {
         spin.failed(red().bold(error.message));
@@ -86,8 +88,9 @@ async function scrapVideoPlayer(browser, dramaLink) {
  * @function main
  * @param {!string} dramaName
  * @param {Set<string>} [wantedEpisode]
+ * @param {boolean} [openLink=false]
  */
-async function main(dramaName, wantedEpisode = null) {
+async function main(dramaName, wantedEpisode = null, openLink = false) {
     console.log(white().bold(`\n  > Searching for drame: ${cyan().bold(dramaName)}\n`));
 
     const spin = new Spinner({
@@ -123,7 +126,10 @@ async function main(dramaName, wantedEpisode = null) {
 
         for (let id = 0; id < episodesURL.length; id++) {
             const url = episodesURL[id];
-            await scrapVideoPlayer(browser, url);
+            const embedLink = await scrapVideoPlayer(browser, url);
+            if (openLink && typeof embedLink === "string") {
+                await open(embedLink);
+            }
         }
         console.log("");
     }
