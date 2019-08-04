@@ -14,16 +14,31 @@ $ npm i kissasian -g
 
 ## Usage example
 
-To fetch episode **1** and **2** of the Father-is-Strange drama. Episodes must be seperated by a comma `,`.
+To show all options just run `--help`
 ```bash
+$ kissasian --help
+```
+---
+
+To fetch episode **1** and **2** of the Father-is-Strange drama (for example). Episodes must be seperated by a comma `,`
+```bash
+# fetch multiple episodes
 $ kissasian Father-is-Strange -e 1,2
-# or fetch only one episode
+
+# fetch one episode
 $ kissasian Father-is-Strange -e 3
 ```
 
-It's possible to fetch all episodes (just omit `--episode` option):
+It's possible to fetch all episodes (just omit `--episode` : `-e` option):
 ```bash
 $ kissasian Father-is-Strange
+```
+
+---
+
+To open the fetched link in your default navigator just add the `--open` / `-o` option.
+```bash
+$ kissasian Father-is-Strange --episode 3 --open
 ```
 
 ## License
