@@ -35,7 +35,9 @@
   "dependencies": {
     "@slimio/async-cli-spinner": "^0.3.1",
     "@slimio/lock": "^0.1.0",
+    "kleur": "^3.0.3",
     "make-promises-safe": "^5.0.0",
-    "puppeteer": "^1.19.0"
+    "puppeteer": "^1.19.0",
+    "sade": "^1.6.1"
   }
 }
