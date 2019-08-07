@@ -3,16 +3,21 @@
 
 require("make-promises-safe");
 
+// Require Node.js Dependencies
+const os = require("os");
+
 // Require Third-party Dependencies
 const puppeteer = require("puppeteer");
 const Spinner = require("@slimio/async-cli-spinner");
 const sade = require("sade");
 const open = require("open");
+const cacache = require("cacache");
 const { white, cyan, green, yellow, red } = require("kleur");
 
 // CONSTANTS
 const TIME_TO_WAIT = 6000;
 const RE_EPISODES = /\/Episode-([0-9]+)\?id=([0-9]+)/g;
+const TMP = os.tmpdir();
 
 sade("kissasian <name>", true)
     .version("1.1.0")
@@ -21,7 +26,22 @@ sade("kissasian <name>", true)
     .option("-e, --episode <episode>", "select a given episode", null)
     .option("-o, --open", "open embed link in your default navigator")
     .option("-p, --player", "default player to fetch", "mp")
+    .option("-l, --last", "get last embeds links", false)
     .action(async(dramaName, opts) => {
+        if (opts.last) {
+            const { data } = await cacache.get(TMP, `${dramaName}_last`);
+            const embeds = data.toString().split(",");
+
+            console.log("\nlast embeds links:");
+            for (const link of embeds) {
+                console.log(yellow().bold(link));
+                if (opts.open) {
+                    await open(link);
+                }
+            }
+
+            return;
+        }
         if (typeof opts.episode === "boolean") {
             opts.episode = "";
         }
@@ -110,36 +130,65 @@ async function main(dramaName, options) {
     const browser = await puppeteer.launch();
     try {
         const page = await browser.newPage();
-
-        const dramaURLRoot = `https://kissasian.sh/Drama/${dramaName}`;
-        await page.goto(dramaURLRoot);
-
-        spin.text = `Waiting for ${cyan().bold(TIME_TO_WAIT / 1000)} seconds...`;
-        await new Promise((resolve) => setTimeout(resolve, TIME_TO_WAIT));
-
-        const HTML = await page.content();
         const episodesURL = [];
-        {
-            let rMatch;
-            while ((rMatch = RE_EPISODES.exec(HTML)) !== null) {
-                const [str, id] = rMatch;
+        let fetchEpisode = true;
 
+        try {
+            const { data } = await cacache.get(TMP, dramaName);
+            const allEpisodes = data.toString().split(",");
+            for (const str of allEpisodes) {
+                const [id, currURL] = str.split("+");
                 if (wantedEpisode !== null && !wantedEpisode.has(id)) {
                     continue;
                 }
-                episodesURL.push(`${dramaURLRoot}${str}&s=${player}`);
+                episodesURL.push(currURL);
+            }
+
+            fetchEpisode = false;
+        }
+        catch (err) {
+            // Ignore
+        }
+
+        if (fetchEpisode) {
+            const dramaURLRoot = `https://kissasian.sh/Drama/${dramaName}`;
+            await page.goto(dramaURLRoot);
+
+            spin.text = `Waiting for ${cyan().bold(TIME_TO_WAIT / 1000)} seconds...`;
+            await new Promise((resolve) => setTimeout(resolve, TIME_TO_WAIT));
+
+            const HTML = await page.content();
+            {
+                const completeEpisodesList = [];
+                let rMatch;
+                while ((rMatch = RE_EPISODES.exec(HTML)) !== null) {
+                    const [str, id] = rMatch;
+
+                    const currURL = `${dramaURLRoot}${str}&s=${player}`;
+                    completeEpisodesList.push(`${id}+${currURL}`);
+                    if (wantedEpisode !== null && !wantedEpisode.has(id)) {
+                        continue;
+                    }
+                    episodesURL.push(currURL);
+                }
+
+                await cacache.put(TMP, dramaName, completeEpisodesList.join(","));
             }
         }
         spin.succeed(green().bold(`Successfully fetched ${episodesURL.length} episodes!`));
         console.log(white().bold("\n  > Fetching all episodes players embed:\n"));
 
+        const embedURLS = [];
         for (let id = 0; id < episodesURL.length; id++) {
             const url = episodesURL[id];
             const embedLink = await scrapVideoPlayer(browser, url);
+            embedURLS.push(embedLink);
             if (openLink && typeof embedLink === "string") {
                 await open(embedLink);
             }
         }
+
+        await cacache.put(TMP, `${dramaName}_last`, embedURLS.join(","));
         console.log("");
     }
     catch (error) {
