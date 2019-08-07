@@ -20,13 +20,18 @@ sade("kissasian <name>", true)
     .example("kissasian Father-is-Strange")
     .option("-e, --episode <episode>", "select a given episode", null)
     .option("-o, --open", "open embed link in your default navigator")
+    .option("-p, --player", "default player to fetch", "mp")
     .action(async(dramaName, opts) => {
         if (typeof opts.episode === "boolean") {
             opts.episode = "";
         }
 
-        const episodes = opts.episode === null ? null : new Set(opts.episode.toString().split(","));
-        await main(dramaName, episodes, opts.open);
+        const wantedEpisode = opts.episode === null ? null : new Set(opts.episode.toString().split(","));
+        await main(dramaName, {
+            wantedEpisode,
+            openLink: opts.open,
+            player: opts.player
+        });
     })
     .parse(process.argv);
 
@@ -87,10 +92,14 @@ async function scrapVideoPlayer(browser, dramaLink) {
  * @async
  * @function main
  * @param {!string} dramaName
- * @param {Set<string>} [wantedEpisode]
- * @param {boolean} [openLink=false]
+ * @param {object} [options]
+ * @param {Set<string>} [options.wantedEpisode]
+ * @param {boolean} [options.openLink=false]
+ * @param {string} [options.player]
  */
-async function main(dramaName, wantedEpisode = null, openLink = false) {
+async function main(dramaName, options) {
+    const { wantedEpisode = null, openLink = false, player = "mp" } = options;
+
     console.log(white().bold(`\n  > Searching for drame: ${cyan().bold(dramaName)}\n`));
 
     const spin = new Spinner({
@@ -118,7 +127,7 @@ async function main(dramaName, wantedEpisode = null, openLink = false) {
                 if (wantedEpisode !== null && !wantedEpisode.has(id)) {
                     continue;
                 }
-                episodesURL.push(`${dramaURLRoot}${str}&s=mp`);
+                episodesURL.push(`${dramaURLRoot}${str}&s=${player}`);
             }
         }
         spin.succeed(green().bold(`Successfully fetched ${episodesURL.length} episodes!`));
