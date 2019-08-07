@@ -26,6 +26,7 @@ sade("kissasian <name>", true)
     .option("-e, --episode <episode>", "select a given episode", null)
     .option("-o, --open", "open embed link in your default navigator")
     .option("-p, --player", "default player to fetch", "mp")
+    .option("-n, --nocache", "disable cache", false)
     .option("-l, --last", "get last embeds links", false)
     .action(async(dramaName, opts) => {
         if (opts.last) {
@@ -50,7 +51,8 @@ sade("kissasian <name>", true)
         await main(dramaName, {
             wantedEpisode,
             openLink: opts.open,
-            player: opts.player
+            player: opts.player,
+            nocache: opts.nocache
         });
     })
     .parse(process.argv);
@@ -116,11 +118,11 @@ async function scrapVideoPlayer(browser, dramaLink) {
  * @param {Set<string>} [options.wantedEpisode]
  * @param {boolean} [options.openLink=false]
  * @param {string} [options.player]
+ * @param {boolean} [options.nocache]
  */
 async function main(dramaName, options) {
-    const { wantedEpisode = null, openLink = false, player = "mp" } = options;
-
-    console.log(white().bold(`\n  > Searching for drame: ${cyan().bold(dramaName)}\n`));
+    const { wantedEpisode = null, openLink = false, player = "mp", nocache = false } = options;
+    console.log(white().bold(`\n  > Searching for drama with name: ${cyan().bold(dramaName)}\n`));
 
     const spin = new Spinner({
         spinner: "dots",
@@ -133,21 +135,24 @@ async function main(dramaName, options) {
         const episodesURL = [];
         let fetchEpisode = true;
 
-        try {
-            const { data } = await cacache.get(TMP, dramaName);
-            const allEpisodes = data.toString().split(",");
-            for (const str of allEpisodes) {
-                const [id, currURL] = str.split("+");
-                if (wantedEpisode !== null && !wantedEpisode.has(id)) {
-                    continue;
+        if (!nocache) {
+            try {
+                const { data } = await cacache.get(TMP, dramaName);
+                const allEpisodes = data.toString().split(",");
+                for (const str of allEpisodes) {
+                    const [id, currURL] = str.split("+");
+                    // eslint-disable-next-line
+                    if (wantedEpisode !== null && !wantedEpisode.has(id)) {
+                        continue;
+                    }
+                    episodesURL.push(currURL);
                 }
-                episodesURL.push(currURL);
-            }
 
-            fetchEpisode = false;
-        }
-        catch (err) {
-            // Ignore
+                fetchEpisode = false;
+            }
+            catch (err) {
+                // Ignore
+            }
         }
 
         if (fetchEpisode) {
