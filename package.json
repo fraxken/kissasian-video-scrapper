@@ -1,6 +1,6 @@
 {
   "name": "kissasian",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "kissasian.ch (Drama site) - video embed scrapper",
   "main": "index.js",
   "scripts": {
