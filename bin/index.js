@@ -83,7 +83,7 @@ async function scrapVideoPlayer(browser, dramaLink) {
 
         spin.text = "Search and decode player embed link!";
         const HTML = await page.content();
-        const match = /var src = \$kissenc\.decrypt\('([/A-Za-z0-9=+]+)/g.exec(HTML);
+        const match = /\$kissenc\.decrypt\(['|"]([/A-Za-z0-9=+]+)/g.exec(HTML);
         if (match === null) {
             spin.failed(`Unable to found src embedlink: ${dramaLink}`);
 
@@ -180,7 +180,7 @@ async function main(dramaName, options) {
                 await cacache.put(TMP, dramaName, completeEpisodesList.join(","));
             }
         }
-        spin.succeed(green().bold(`Successfully fetched ${episodesURL.length} episodes!`));
+        spin.succeed(green().bold(`Successfully fetched ${episodesURL.length} episode(s)!`));
         console.log(white().bold("\n  > Fetching all episodes players embed:\n"));
 
         const embedURLS = [];
